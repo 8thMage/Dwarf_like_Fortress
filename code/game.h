@@ -25,15 +25,20 @@ struct Map
 	int width;
 	int height;
 };
-
+struct Job
+{
+	Vec2i pos;
+};
 struct Dwarf
 {
-	Vec2 pos;
-	float fov;
+	Vec2i pos;
+	Job* job;
 };
 struct Game_data
 {
 	Map map;
+	Dwarf* dwarfs;
+	int dwarf_number;
 };
 
 struct GameMemory

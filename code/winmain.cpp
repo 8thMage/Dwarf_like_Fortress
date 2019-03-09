@@ -629,9 +629,9 @@ bool swap_interval(int x)
 static int x = 0;
 void push_to_screen_opengl(PictureBuffer screen,HDC DeviceContext)
 {
-	glFlush();
-	//swap_interval(0);
-	SwapBuffers(DeviceContext);
+//	glFlush();
+	swap_interval(1);
+//	SwapBuffers(DeviceContext);
 }
 /*
 #define init_platform_struct_func(name) platform_struct->name=&name;
@@ -730,7 +730,7 @@ int CALLBACK WinMain(
 	dll = LoadLibrary("render3dnow.dll");
 	goGame = (goGametype*)GetProcAddress(dll, "go_game");
 	screen = { 0,0,width,height,width };
-	//screen.picture=(u32*)alloc_memory(width*height*4);
+//	screen.picture=(u32*)alloc_memory(width*height*4);
 	HANDLE input_file = 0;
 	int zlib_file_length=0;
 	void* zlib_file_buffer=0;
@@ -738,16 +738,16 @@ int CALLBACK WinMain(
 	//Assert(read_file("../Future CITY 4.4/region/r.0.0.mca",game_memory.temp_buffer,&zlib_file_length,&zlib_file_buffer));
 	//read_and_parse_region_buffer(zlib_file_buffer,zlib_file_length);
 
-	//HBITMAP BitmapHandle= CreateBitmap(game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,1,32,(char*)game_memory.draw_context.screen->picture);
-	/*HBITMAP CreateDIBSection(
+	HBITMAP BitmapHandle= CreateBitmap(game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,1,32,(char*)game_memory.draw_context.screen->picture);
+/*	HBITMAP CreateDIBSection(
 	  HDC              hdc,
 	  const BITMAPINFO *pbmi,
 	  UINT             usage,
 	  VOID             **ppvBits,
 	  HANDLE           hSection,
 	  DWORD            offset
-	  );*/
-	/*typedef struct tagBITMAPINFOHEADER {
+	  );
+	typedef struct tagBITMAPINFOHEADER {
 	  DWORD biSize;
 	  LONG  biWidth;
 	  LONG  biHeight;
@@ -769,7 +769,7 @@ int CALLBACK WinMain(
 	header.biCompression=BI_RGB;
 	header.biSizeImage=0;
 	BITMAPINFO info={header,0};
-//	HBITMAP new_bitmap=CreateDIBSection(hdc,&info,DIB_RGB_COLORS,(void**)&screen.picture,0,0);
+	HBITMAP new_bitmap=CreateDIBSection(hdc,&info,DIB_RGB_COLORS,(void**)&screen.picture,0,0);
 	while (running)
 	{
 		t1 = t2;
@@ -894,8 +894,8 @@ int CALLBACK WinMain(
 			screen.width=width;
 			screen.height=height;
 			screen.pitch=width;
-			//if(screen.picture)
-			//	VirtualFree(screen.picture,0,MEM_RELEASE);
+			if(screen.picture)
+				VirtualFree(screen.picture,0,MEM_RELEASE);
 			//screen.picture=(unsigned int*)VirtualAlloc(0,width*height*4, MEM_COMMIT, PAGE_READWRITE);
 			//DeleteObject(new_bitmap);
 			BITMAPINFOHEADER header={};
@@ -907,7 +907,7 @@ int CALLBACK WinMain(
 			header.biCompression=BI_RGB;
 			header.biSizeImage=0;
 			BITMAPINFO info={header,0};
-			//new_bitmap=CreateDIBSection(hdc,&info,DIB_RGB_COLORS,(void**)&screen.picture,0,0);
+			new_bitmap=CreateDIBSection(hdc,&info,DIB_RGB_COLORS,(void**)&screen.picture,0,0);
 
 			resized = false;
 
@@ -915,7 +915,7 @@ int CALLBACK WinMain(
 
 		GetClientRect(window, &rect);
 		window_rect={(r32)rect.left,(r32)rect.top,(r32)rect.right,(r32)rect.bottom};
-		//HDC hdcNew=CreateCompatibleDC(hdc);
+		HDC hdcNew=CreateCompatibleDC(hdc);
 		HDC hdc = GetDC(window);
 		game_memory.draw_context.screen=&screen;
 
@@ -929,13 +929,13 @@ int CALLBACK WinMain(
 		{	
 			push_to_screen_opengl(screen, hdc);
 		}
-		HDC hdcNew=CreateCompatibleDC(hdc);
+		//HDC hdcNew=CreateCompatibleDC(hdc);
 		u32* screen_picture=game_memory.draw_context.screen->picture;
 	
 		//HBITMAP BitmapHandle= CreateBitmap(game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,1,32,(char*)game_memory.draw_context.screen->picture);
 		game_memory.draw_context.screen->pitch=game_memory.draw_context.screen->width;
-		//HBITMAP hbmOld = (HBITMAP)SelectObject(hdcNew,new_bitmap);
-	//	BitBlt(hdc,0,0,game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,hdcNew,0,0,SRCCOPY);
+		HBITMAP hbmOld = (HBITMAP)SelectObject(hdcNew,new_bitmap);
+		BitBlt(hdc,0,0,game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,hdcNew,0,0,SRCCOPY);
 
 
 		DeleteDC(hdcNew);

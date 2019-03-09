@@ -13,26 +13,27 @@ struct Render_queue
 {
 	MemoryBuffer* queue;
 };
+enum Map_objects
+{
+	map_object_clear,
+	map_object_rock,
+	map_object_target,
+};
 struct Map
 {
-	bool* arr;
+	Map_objects* map_objs;
 	int width;
 	int height;
-	bool step;
 };
-struct Player
+
+struct Dwarf
 {
 	Vec2 pos;
-	Vec2 look_dir;
 	float fov;
 };
 struct Game_data
 {
-	Map* wall_tile_map;
-	Player player;
-	bool dust_on;
-	bool balls_on;
-	bool edit_on;
+	Map map;
 };
 
 struct GameMemory

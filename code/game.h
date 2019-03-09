@@ -25,8 +25,15 @@ struct Map
 	int width;
 	int height;
 };
+enum Job_type
+{
+	job_type_none,
+	job_type_dig_rock,
+	job_type_return_inventory,
+};
 struct Job
 {
+	Job_type type;
 	Vec2i pos;
 };
 struct Job_queue
@@ -39,8 +46,9 @@ struct Job_queue
 struct Dwarf
 {
 	Vec2i pos;
-	Job* job;
+	Job job;
 	u64 next_time_to_move;
+	int inventory;
 };
 struct Game_data
 {

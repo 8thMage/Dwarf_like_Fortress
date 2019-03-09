@@ -629,8 +629,8 @@ bool swap_interval(int x)
 static int x = 0;
 void push_to_screen_opengl(PictureBuffer screen,HDC DeviceContext)
 {
-//	glFlush();
-	swap_interval(1);
+	glFlush();
+	swap_interval(2);
 //	SwapBuffers(DeviceContext);
 }
 /*
@@ -891,17 +891,17 @@ int CALLBACK WinMain(
 			GetClientRect(window, &rect);
 			int width = (rect.right - rect.left);
 			int height = (rect.bottom - rect.top);
-			screen.width=width;
-			screen.height=height;
-			screen.pitch=width;
+			screen.width=1360;
+			screen.height=720;
+			screen.pitch=1360;
 			if(screen.picture)
 				VirtualFree(screen.picture,0,MEM_RELEASE);
 			//screen.picture=(unsigned int*)VirtualAlloc(0,width*height*4, MEM_COMMIT, PAGE_READWRITE);
 			//DeleteObject(new_bitmap);
 			BITMAPINFOHEADER header={};
 			header.biSize=sizeof(header);
-			header.biWidth=screen.width;
-			header.biHeight=-screen.height;
+			header.biWidth=1360;
+			header.biHeight=-720;
 			header.biPlanes=1;
 			header.biBitCount=32;
 			header.biCompression=BI_RGB;
@@ -935,7 +935,7 @@ int CALLBACK WinMain(
 		//HBITMAP BitmapHandle= CreateBitmap(game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,1,32,(char*)game_memory.draw_context.screen->picture);
 		game_memory.draw_context.screen->pitch=game_memory.draw_context.screen->width;
 		HBITMAP hbmOld = (HBITMAP)SelectObject(hdcNew,new_bitmap);
-		BitBlt(hdc,0,0,game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,hdcNew,0,0,SRCCOPY);
+		StretchBlt(hdc,0,0,rect.right-rect.left,rect.bottom-rect.top,hdcNew,0,0,game_memory.draw_context.screen->width,game_memory.draw_context.screen->height,SRCCOPY);
 
 
 		DeleteDC(hdcNew);

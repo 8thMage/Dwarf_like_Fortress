@@ -64,7 +64,7 @@ struct Input
     s16 mouse_wheel_turns;
     Vec2 mouse_pos; 
 	Vec2 logical_mouse_pos;
-	u32 time;
+	u64 time;
 };
 typedef bool read_file_type(char* path,MemoryBuffer* memorybuffer,s32* length,void** file);
 read_file_type read_file;

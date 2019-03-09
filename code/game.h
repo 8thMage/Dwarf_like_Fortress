@@ -29,16 +29,22 @@ struct Job
 {
 	Vec2i pos;
 };
+struct Job_queue
+{
+	Job rock_position;
+};
 struct Dwarf
 {
 	Vec2i pos;
 	Job* job;
+	u64 next_time_to_move;
 };
 struct Game_data
 {
 	Map map;
 	Dwarf* dwarfs;
 	int dwarf_number;
+	Job_queue job_queue;
 };
 
 struct GameMemory

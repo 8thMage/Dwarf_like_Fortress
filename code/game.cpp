@@ -64,10 +64,12 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 			}
 		}
 		map->map_objs[5*map->width+20]=map_object_rock;
+		game_memory->game_data->job_queue.rock_position.pos=vec2i(20,5);
 		map->map_objs[40*map->width+20]=map_object_target;
 		game_memory->game_data->dwarf_number=1;
 		game_memory->game_data->dwarfs=push_array(game_memory->const_buffer,Dwarf,game_memory->game_data->dwarf_number);
 		Dwarf* dwarfs=game_memory->game_data->dwarfs;
+		*dwarfs={};
 		dwarfs->pos=vec2i(40,20);
 	}
 	Game_data* game_data=game_memory->game_data;
@@ -75,23 +77,46 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 	draw_game(game_data,&game_memory->draw_context);
 	for(int i=0;i<game_data->dwarf_number;i++)
 	{
-		game_data->dwarfs[i].pos.x-=1;
-		game_data->dwarfs[i].pos.y-=1;
-		if(game_data->dwarfs[i].pos.x<0)
+		Dwarf* dwarf=&game_data->dwarfs[i];
+		if(input->time>dwarf->next_time_to_move)
 		{
-			game_data->dwarfs[i].pos.x+=map->width;
-		}
-		if(game_data->dwarfs[i].pos.y<0)
-		{
-			game_data->dwarfs[i].pos.y+=map->height;
-		}
-		if(game_data->dwarfs[i].pos.x>=map->width)
-		{
-			game_data->dwarfs[i].pos.x-=map->width;
-		}
-		if(game_data->dwarfs[i].pos.y>=map->height)
-		{
-			game_data->dwarfs[i].pos.y-=map->height;
+			if(dwarf->job)
+			{
+				Job* job=dwarf->job;
+				if(abs(dwarf->pos.x-job->pos.x)+abs(dwarf->pos.y-job->pos.y)==1)
+				{
+					map->map_objs[job->pos.y*map->width+job->pos.x]=map_object_clear;
+					Vec2i new_pos=vec2i((dwarf->pos.y+20)%map->width,dwarf->pos.x);
+					game_data->job_queue.rock_position.pos=new_pos;
+					map->map_objs[new_pos.y*map->width+new_pos.x]=map_object_rock;
+					dwarf->job=0;
+					dwarf->next_time_to_move=input->time+100;
+				}
+				else if(dwarf->pos.x<job->pos.x)
+				{
+					dwarf->pos.x++;
+					dwarf->next_time_to_move=input->time+10;
+				}
+				else if(dwarf->pos.y<job->pos.y)
+				{
+					dwarf->pos.y++;
+					dwarf->next_time_to_move=input->time+10;
+				}
+				else if(dwarf->pos.x>job->pos.x)
+				{
+					dwarf->pos.x--;
+					dwarf->next_time_to_move=input->time+10;
+				}
+				else if(dwarf->pos.y>job->pos.y)
+				{
+					dwarf->pos.y--;
+					dwarf->next_time_to_move=input->time+10;
+				}
+			}
+			if(!dwarf->job)
+			{
+				dwarf->job=&game_data->job_queue.rock_position;
+			}
 		}
 	}
 };

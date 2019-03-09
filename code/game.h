@@ -31,7 +31,10 @@ struct Job
 };
 struct Job_queue
 {
-	Job rock_position;
+	Job* rocks_position;
+	int next_read;
+	int next_write;
+	int capacity;
 };
 struct Dwarf
 {

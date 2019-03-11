@@ -18,6 +18,7 @@ enum Map_objects
 	map_object_clear,
 	map_object_rock,
 	map_object_target,
+	map_object_chair_factory,
 };
 struct Map
 {
@@ -30,6 +31,7 @@ enum Job_type
 	job_type_none,
 	job_type_dig_rock,
 	job_type_return_inventory,
+	job_type_make_chair,
 };
 struct Job
 {
@@ -43,6 +45,10 @@ struct Job_queue
 	int next_write;
 	int capacity;
 };
+struct chair_factory
+{
+	int rock_number;
+};
 struct Dwarf
 {
 	Vec2i pos;
@@ -55,6 +61,8 @@ struct Game_data
 	Map map;
 	Dwarf* dwarfs;
 	int dwarf_number;
+	int rock_number;
+	int chair_number;
 	Job_queue job_queue;
 };
 

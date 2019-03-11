@@ -1,0 +1,44 @@
+
+1. you now have dwarfs great. 
+	they can move around in a rudimentory fashion. they have no lookup functions:(
+2. But you want a job system. what does it mean?
+2.1 Chairs, you want dwarfs to make chairs. This means:
+* need to bring rocks into factory.
+* need to have a dwarf make chairs out of rock.
+2.2 so factories need to know what they need, and then have a dwarf
+	bring it. 
+2.3 maybe factories put job into job queue?
+2.4 maybe dig_rock should have a dst? then each work will have pos and dst.
+2.5 first bring rock into target-> then bring rock from target to factory.
+2.6 but why does it need to know the src? can't it just look for it?
+3.  if each job has a dst why not more? 
+3.1 why can't the phases be Jobs.
+4. i want a fucking graph of jobs!
+4.1 How do i get a "fucking graph of jobs" that's the problem.
+4.2 Let's think about a graph
+
+	  -chair*4
+	 /		  \
+rock- 		  -- garden furniture.
+	 \		 /
+	  -table/
+
+4.3 Let's think of a better graph
+
+	  sandstone-silicon
+	 /				   \
+rock-					cpu\
+	 \		  			/	\
+		metal ore-metal/	 computer.
+							 /
+oil----plastic-computer case/
+
+Yes you can turn rock into sandstone. 
+
+so real Todo:
+1. Job system should be a graph based system where the "user"
+   declares the end goal. 
+   But the workers can take work at any time. if they have the requirements.
+2. first make a chair rock->chair.
+3. 4*chairs+table->garden furniture.
+4. something like the graph above.

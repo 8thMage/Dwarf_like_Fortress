@@ -891,17 +891,17 @@ int CALLBACK WinMain(
 			GetClientRect(window, &rect);
 			int width = (rect.right - rect.left);
 			int height = (rect.bottom - rect.top);
-			screen.width=1360;
-			screen.height=720;
-			screen.pitch=1360;
+			screen.width=1366;
+			screen.height=768;
+			screen.pitch=1366;
 			if(screen.picture)
 				VirtualFree(screen.picture,0,MEM_RELEASE);
 			//screen.picture=(unsigned int*)VirtualAlloc(0,width*height*4, MEM_COMMIT, PAGE_READWRITE);
 			//DeleteObject(new_bitmap);
 			BITMAPINFOHEADER header={};
 			header.biSize=sizeof(header);
-			header.biWidth=1360;
-			header.biHeight=-720;
+			header.biWidth=screen.width;
+			header.biHeight=-screen.height;
 			header.biPlanes=1;
 			header.biBitCount=32;
 			header.biCompression=BI_RGB;
@@ -952,7 +952,9 @@ int CALLBACK WinMain(
 			s32 offset = SetFilePointer(input_file, 0, 0, FILE_CURRENT);
 			Assert(offset - offset2 == 0);
 		}
-
+		if(l<16000)
+			Sleep(16-l/1000);
+		QueryPerformanceCounter(&t2);
 		l = (DWORD)((t2.QuadPart - t1.QuadPart) * 1000000 / freq.QuadPart);
 		input.time += l / 1000;
 		char arr[100];

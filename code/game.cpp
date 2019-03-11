@@ -19,10 +19,10 @@ void paint_rect(PictureBuffer* screen,int startx,int starty,int width,int height
 void draw_game(Game_data* game_data,Draw_context* draw_context)
 {
 	Map* map = &game_data->map;
-	paint_rect(draw_context->screen,0,0,draw_context->screen->width,draw_context->screen->height,0x11111111);
+	//paint_rect(draw_context->screen,0,0,draw_context->screen->width,draw_context->screen->height,0x11111111);
 	int height=6;
-	int width=9;
-	int stridex=10;
+	int width=12;
+	int stridex=13;
 	int stridey=7;
 	for(int y=0;y<map->height;y++)
 	{
@@ -38,6 +38,9 @@ void draw_game(Game_data* game_data,Draw_context* draw_context)
 					break;
 				case map_object_target:
 					paint_rect(draw_context->screen,x*stridex,y*stridey,width,height,0xff00ff00);
+					break;
+				case map_object_chair_factory:
+					paint_rect(draw_context->screen,x*stridex,y*stridey,width,height,0xffffff00);
 					break;
 			}
 		}
@@ -80,8 +83,16 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		map->map_objs[pos_to_map(map,rock)]=map_object_rock;
 		rock={10,35};
 		map->map_objs[pos_to_map(map,rock)]=map_object_rock;
+		rock={90,85};
+		map->map_objs[pos_to_map(map,rock)]=map_object_rock;
+		rock={80,25};
+		map->map_objs[pos_to_map(map,rock)]=map_object_rock;
+		rock={50,75};
+		map->map_objs[pos_to_map(map,rock)]=map_object_rock;
 		Vec2i target={10,45};
 		map->map_objs[pos_to_map(map,target)]=map_object_target;
+		Vec2i chair_factory={15,25};
+		map->map_objs[pos_to_map(map,chair_factory)]=map_object_chair_factory;
 		Job_queue* job_queue=&game_memory->game_data->job_queue;
 		job_queue->capacity=20;
 		job_queue->rocks_position=push_array(game_memory->const_buffer,Job,job_queue->capacity);
@@ -91,14 +102,20 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		job_queue->rocks_position[3].pos=vec2i(10,15);
 		job_queue->rocks_position[4].pos=vec2i(10,35);
 		job_queue->rocks_position[5].pos=vec2i(10,25);
+		job_queue->rocks_position[6].pos=vec2i(10,25);
+		job_queue->rocks_position[7].pos=vec2i(10,25);
+		job_queue->rocks_position[8].pos=vec2i(10,25);
 		job_queue->rocks_position[0].type=job_type_dig_rock;
 		job_queue->rocks_position[1].type=job_type_dig_rock;
 		job_queue->rocks_position[2].type=job_type_dig_rock;
 		job_queue->rocks_position[4].type=job_type_dig_rock;
 		job_queue->rocks_position[4].type=job_type_dig_rock;
 		job_queue->rocks_position[5].type=job_type_dig_rock;
+		job_queue->rocks_position[6].type=job_type_dig_rock;
+		job_queue->rocks_position[7].type=job_type_dig_rock;
+		job_queue->rocks_position[8].type=job_type_dig_rock;
 
-		job_queue->next_write=6;
+		job_queue->next_write=9;
 		job_queue->next_read=0;
 		game_memory->game_data->dwarf_number=10;
 		game_memory->game_data->dwarfs=push_array(game_memory->const_buffer,Dwarf,game_memory->game_data->dwarf_number);
@@ -141,6 +158,7 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 						job->type=job_type_none;
 						dwarf->next_time_to_move=input->time+100;
 						dwarf->inventory=0;
+						game_data->rock_number++;
 					}
 				}
 				else if(dwarf->pos.x<job->pos.x)
@@ -170,6 +188,11 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 				{
 					dwarf->job.type=job_type_return_inventory;
 					dwarf->job.pos=vec2i(10,45);
+				}
+				else if(false&&game_data->rock_number&&dwarf->inventory==0)
+				{
+					dwarf->job.type=job_type_make_chair;
+					dwarf->job.pos=vec2i(15,25);
 				}
 				else if(game_data->job_queue.next_read<game_data->job_queue.next_write)
 				{

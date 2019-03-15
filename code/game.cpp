@@ -76,15 +76,32 @@ void find_next_job_in_new_job(New_job* new_job,Dwarf* dwarf)
 		{
 			forej(node->count_resources_needed)
 			{
-				if(dwarf_has_enough(&node->resources_needed[j],dwarf))
+				if(!dwarf_has_enough(&node->resources_needed[j],dwarf))
 				{
-					node->dwarfs_working_on_it++;
-					dwarf->new_job=node;
-					return;
+					can_do_job=false;
 				}
+			}
+
+			if(can_do_job)
+			{
+				dwarf->new_job=node;
+				node->dwarfs_working_on_it++;
 			}
 		}
 	}
+}
+New_job add_build_chair(MemoryBuffer* buffer)
+{//FRAGMENTATION.
+	New_job job={};
+	job.count=2;
+	job.job_nodes=push_array(buffer,Job_node,2);
+	job.job_nodes[0]={};
+	job.job_nodes[0].resulting_resource=Product_type_rock;
+	job.job_nodes[1]={};
+	job.job_nodes[1].count_resources_needed=1;
+	job.job_nodes[1].resources_needed=push_array(buffer,Job_product,job.job_nodes[1].count_resources_needed);
+	job.job_nodes[1].resulting_resource=Product_type_chair;
+	return job;
 }
 void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 {
@@ -124,7 +141,7 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		map->map_objs[pos_to_map(map,target)]=map_object_target;
 		Vec2i chair_factory={15,25};
 		map->map_objs[pos_to_map(map,chair_factory)]=map_object_chair_factory;
-		Job_queue* job_queue=&game_memory->game_data->job_queue;
+		Job_queue* job_queue=&game_memory->game_data->rocks_queue;
 		job_queue->capacity=20;
 		job_queue->rocks_position=push_array(game_memory->const_buffer,Job,job_queue->capacity);
 		job_queue->rocks_position[0].pos=vec2i(20,5);
@@ -132,9 +149,9 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		job_queue->rocks_position[2].pos=vec2i(30,5);
 		job_queue->rocks_position[3].pos=vec2i(10,15);
 		job_queue->rocks_position[4].pos=vec2i(10,35);
-		job_queue->rocks_position[5].pos=vec2i(10,25);
-		job_queue->rocks_position[6].pos=vec2i(10,25);
-		job_queue->rocks_position[7].pos=vec2i(10,25);
+		job_queue->rocks_position[5].pos=vec2i(90,85);
+		job_queue->rocks_position[6].pos=vec2i(80,25);
+		job_queue->rocks_position[7].pos=vec2i(50,75);
 		job_queue->rocks_position[8].pos=vec2i(10,25);
 		job_queue->rocks_position[0].type=job_type_dig_rock;
 		job_queue->rocks_position[1].type=job_type_dig_rock;
@@ -148,6 +165,15 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 
 		job_queue->next_write=9;
 		job_queue->next_read=0;
+		New_job_queue* new_job_queue=&game_memory->game_data->job_queue;
+		new_job_queue->capacity=20;
+		new_job_queue->new_jobs=push_array(game_memory->const_buffer,New_job,new_job_queue->capacity);
+		new_job_queue->new_jobs[0]=add_build_chair(game_memory->const_buffer);
+		new_job_queue->next_write=1;
+		new_job_queue->new_jobs[1]=add_build_chair(game_memory->const_buffer);
+		new_job_queue->next_write=2;
+		new_job_queue->new_jobs[2]=add_build_chair(game_memory->const_buffer);
+		new_job_queue->next_write=3;
 		game_memory->game_data->dwarf_number=10;
 		game_memory->game_data->dwarfs=push_array(game_memory->const_buffer,Dwarf,game_memory->game_data->dwarf_number);
 		Dwarf* dwarfs=game_memory->game_data->dwarfs;
@@ -162,14 +188,16 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		Dwarf* dwarf=&game_data->dwarfs[i];
 		if(input->time>dwarf->next_time_to_move)
 		{
-			if(dwarf->job.type!=job_type_none)
+			if(dwarf->new_job)
 			{
-				Job* job=&dwarf->job;
-				if(abs(dwarf->pos.x-job->pos.x)+abs(dwarf->pos.y-job->pos.y)<=1)
+				Job_node* job=dwarf->new_job;
+				if(abs(dwarf->pos.x-dwarf->tgt.x)+abs(dwarf->pos.y-dwarf->tgt.y)<=1)
 				{
-					if(job->type==job_type_dig_rock)
+					if(dwarf->new_job->resulting_resource==Product_type_rock)
 					{
-						map->map_objs[pos_to_map(map,job->pos)]=map_object_clear;
+						dwarf->inventory[Product_type_rock].number++;
+						dwarf->new_job->dwarfs_working_on_it=0;
+						map->map_objs[pos_to_map(map,dwarf->tgt)]=map_object_clear;
 						Vec2i new_pos=vec2i((dwarf->pos.y+20)%map->width,dwarf->pos.x);
 						while(map->map_objs[pos_to_map(map,new_pos)]!=map_object_clear)
 						{
@@ -177,58 +205,59 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 							new_pos.x=new_pos.x%map->width;
 						}
 						map->map_objs[pos_to_map(map,new_pos)]=map_object_rock;
-						game_data->job_queue.rocks_position[game_data->job_queue.next_write%game_data->job_queue.capacity].pos=new_pos;
-						game_data->job_queue.rocks_position[game_data->job_queue.next_write%game_data->job_queue.capacity].type=job_type_dig_rock;
-						game_data->job_queue.next_write++;
-						dwarf->job.type=job_type_none;
-						dwarf->inventory[Product_type_rock].number+=1;
+						game_data->rocks_queue.rocks_position[game_data->rocks_queue.next_write%game_data->rocks_queue.capacity].pos=new_pos;
+						game_data->rocks_queue.rocks_position[game_data->rocks_queue.next_write%game_data->rocks_queue.capacity].type=job_type_dig_rock;
+						game_data->rocks_queue.next_write++;
 						dwarf->next_time_to_move=input->time+100;
-					}
-					else if(job->type==job_type_return_inventory)
-					{
-						job->type=job_type_none;
-						dwarf->next_time_to_move=input->time+100;
-						dwarf->inventory[Product_type_rock].number=0;
-						game_data->rock_number++;
+						dwarf->new_job=0;
 					}
 				}
-				else if(dwarf->pos.x<job->pos.x)
+				else if(dwarf->pos.x<dwarf->tgt.x)
 				{
 					dwarf->pos.x++;
 					dwarf->next_time_to_move=input->time+10;
 				}
-				else if(dwarf->pos.y<job->pos.y)
+				else if(dwarf->pos.y<dwarf->tgt.y)
 				{
 					dwarf->pos.y++;
 					dwarf->next_time_to_move=input->time+10;
 				}
-				else if(dwarf->pos.x>job->pos.x)
+				else if(dwarf->pos.x>dwarf->tgt.x)
 				{
 					dwarf->pos.x--;
 					dwarf->next_time_to_move=input->time+10;
 				}
-				else if(dwarf->pos.y>job->pos.y)
+				else if(dwarf->pos.y>dwarf->tgt.y)
 				{
 					dwarf->pos.y--;
 					dwarf->next_time_to_move=input->time+10;
 				}
 			}
-			else if(dwarf->job.type==job_type_none)
+			else 
 			{
-				if(dwarf->inventory[0].number==2)
+				New_job_queue* job_queue=&game_data->job_queue;
+				for(int i=job_queue->next_read;i<job_queue->next_write;i++)
 				{
-					dwarf->job.type=job_type_return_inventory;
-					dwarf->job.pos=vec2i(10,45);
-				}
-				/*else if(false&&game_data->rock_number&&dwarf->inventory==0)
-				{
-					dwarf->job.type=job_type_make_chair;
-					dwarf->job.pos=vec2i(15,25);
-				}*/
-				else if(game_data->job_queue.next_read<game_data->job_queue.next_write)
-				{
-					dwarf->job=game_data->job_queue.rocks_position[game_data->job_queue.next_read%game_data->job_queue.capacity];
-					game_data->job_queue.next_read++;
+					find_next_job_in_new_job(&job_queue->new_jobs[i],dwarf);
+					if(dwarf->new_job)
+					{
+						if(dwarf->new_job->resulting_resource==Product_type_rock)
+						{
+							Job_queue* rocks_queue=&game_data->rocks_queue;
+							if(rocks_queue->next_write>rocks_queue->next_read)
+							{
+								Job rock=rocks_queue->rocks_position[rocks_queue->next_read%rocks_queue->capacity];
+								rocks_queue->next_read++;
+								dwarf->tgt=rock.pos;
+								break;
+							}
+							else
+							{
+								dwarf->new_job=0;
+							}
+						}
+					//	else if(dwarf->new_job->resulting_resource==Product_type_chair)
+					}
 				}
 			}
 		}

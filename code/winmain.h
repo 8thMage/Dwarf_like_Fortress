@@ -66,7 +66,23 @@ struct Input
 	Vec2 logical_mouse_pos;
 	u64 time;
 };
+struct Draw_context
+{
+	PictureBuffer* screen;
+};
+struct Game_data;
+struct GameMemory
+{
+	MemoryBuffer* const_buffer;
+	MemoryBuffer* temp_buffer;
+	Draw_context draw_context;
+	MemoryBuffer* render_queue;
+	Game_data* game_data;
+	bool paused;
+};
+
 typedef bool read_file_type(char* path,MemoryBuffer* memorybuffer,s32* length,void** file);
 read_file_type read_file;
+typedef void goGametype (Input*,GameMemory*,read_file_type* read_file);
 #endif
 

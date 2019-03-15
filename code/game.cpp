@@ -1,3 +1,4 @@
+#include "job_graphs.h"
 #include "game.h"
 //#include "stdio.h"
 void paint_rect(PictureBuffer* screen,int startx,int starty,int width,int height,unsigned int color)
@@ -54,6 +55,36 @@ void draw_game(Game_data* game_data,Draw_context* draw_context)
 int pos_to_map(Map* map,Vec2i pos)
 {
 	return pos.y*map->width+pos.x;
+}
+bool dwarf_has_enough(Job_product* product, Dwarf* dwarf)
+{
+	if(dwarf->inventory[product->number].number>product->number)
+	{
+		return true;
+	}
+	return false;
+}
+void find_next_job_in_new_job(New_job* new_job,Dwarf* dwarf)
+{
+	int count=new_job->count;
+	
+	for(int i=count-1;i>=0;i--)
+	{
+		bool can_do_job=true;
+		Job_node* node=&new_job->job_nodes[i];
+		if(node->dwarfs_working_on_it==0)//NOTE():need to be some max
+		{
+			forej(node->count_resources_needed)
+			{
+				if(dwarf_has_enough(&node->resources_needed[j],dwarf))
+				{
+					node->dwarfs_working_on_it++;
+					dwarf->new_job=node;
+					return;
+				}
+			}
+		}
+	}
 }
 void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 {
@@ -150,14 +181,14 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 						game_data->job_queue.rocks_position[game_data->job_queue.next_write%game_data->job_queue.capacity].type=job_type_dig_rock;
 						game_data->job_queue.next_write++;
 						dwarf->job.type=job_type_none;
-						dwarf->inventory+=1;
+						dwarf->inventory[Product_type_rock].number+=1;
 						dwarf->next_time_to_move=input->time+100;
 					}
 					else if(job->type==job_type_return_inventory)
 					{
 						job->type=job_type_none;
 						dwarf->next_time_to_move=input->time+100;
-						dwarf->inventory=0;
+						dwarf->inventory[Product_type_rock].number=0;
 						game_data->rock_number++;
 					}
 				}
@@ -184,16 +215,16 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 			}
 			else if(dwarf->job.type==job_type_none)
 			{
-				if(dwarf->inventory==2)
+				if(dwarf->inventory[0].number==2)
 				{
 					dwarf->job.type=job_type_return_inventory;
 					dwarf->job.pos=vec2i(10,45);
 				}
-				else if(false&&game_data->rock_number&&dwarf->inventory==0)
+				/*else if(false&&game_data->rock_number&&dwarf->inventory==0)
 				{
 					dwarf->job.type=job_type_make_chair;
 					dwarf->job.pos=vec2i(15,25);
-				}
+				}*/
 				else if(game_data->job_queue.next_read<game_data->job_queue.next_write)
 				{
 					dwarf->job=game_data->job_queue.rocks_position[game_data->job_queue.next_read%game_data->job_queue.capacity];

@@ -8,7 +8,7 @@
 #include "vector.cpp"
 #include "memorybuffer.cpp"
 #include "winmain.h"
-#include "game.h"
+//#include "game.h"
 #include "glext.h"
 #include "wglext.h"
 static Rect window_rect;

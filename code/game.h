@@ -3,12 +3,6 @@
 #include "vector.cpp"
 #include "memorybuffer.cpp"
 #include "winmain.h"
-struct Draw_context
-{
-	PictureBuffer* screen;
-	Matrix4x3 transform;
-	s32 top_z;
-};
 struct Render_queue
 {
 	MemoryBuffer* queue;
@@ -53,8 +47,9 @@ struct Dwarf
 {
 	Vec2i pos;
 	Job job;
+	Job_node* new_job;
 	u64 next_time_to_move;
-	int inventory;
+	Job_product inventory[NUM_OF_PRODUCT_TYPES];//NOTE(EDEN): HACK need to be hash_table
 };
 struct Game_data
 {
@@ -66,13 +61,3 @@ struct Game_data
 	Job_queue job_queue;
 };
 
-struct GameMemory
-{
-	MemoryBuffer* const_buffer;
-	MemoryBuffer* temp_buffer;
-	Draw_context draw_context;
-	MemoryBuffer* render_queue;
-	Game_data* game_data;
-	bool paused;
-};
-typedef void goGametype (Input*,GameMemory*,read_file_type* read_file);

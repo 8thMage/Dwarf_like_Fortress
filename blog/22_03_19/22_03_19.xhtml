@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN" "http://www.w3.org/Math/DTD/mathml2/xhtml-math11-f.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="GENERATOR" content="LyX 2.2.2" />
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+<title>The start of a new job system</title>
+<style type='text/css'>
+/* Layout-provided Styles */
+h1.title {
+font-size: x-large;
+margin-bottom: 1ex;
+text-align: center;
+
+}
+div.author {
+font-size: large;
+margin-top: 1.3ex;
+margin-bottom: 0.7ex;
+text-align: center;
+
+}
+div.standard {
+margin-bottom: 2ex;
+}
+ol.enumerate {
+margin-top: 0.7ex;
+margin-bottom: 0.7ex;
+margin-left: 3ex;
+text-align: left;
+
+}
+
+
+</style>
+</head>
+<body dir="auto">
+<h1 class="title"><a id='magicparlabel-1729' />The start of a new job system</h1>
+<div class="author"><a id='magicparlabel-1730' />Eden Segal or The 8th mage.</div>
+<div class="standard"><a id='magicparlabel-1731' />Sorry for not posting anything this weekdays, I am still getting used to it and I started playing hard Sudoku because Youtube.</div>
+
+<div class="standard"><a id='magicparlabel-1732' />Last week I showed how the dwarfs buzzed around without purpose, collecting rocks and putting them into some bins. The previous weekend I worked on the graph based job system, starting with a single job, of building a chair using a single rock. you may not like chairs made out of rocks, but dwarfs do.</div>
+
+<div class="standard"><a id='magicparlabel-1733' />I had some problem with defining how the job system will go, and I decided to start with a simple thing first and grow from there. I decided on the following structure:</div>
+
+<ol class="enumerate"><a id='magicparlabel-1734' /><li class="enumerate_item">Each job has a graph (currently an array) of job nodes.</li>
+<li class="enumerate_item">those nodes has an array of needed resources, and a single resulting output.</li>
+</ol>
+<div class="standard"><a id='magicparlabel-1736' />For example, the current new job of building a chair has 2 job nodes. One of them is a hauling job node of getting a rock from the quarry (read random place on the map, i kept the old job system for now for managing where to get the rock from) and doesn't have any requirements on any resource. The other one is make the chair, and has a required resource of a single rock, to make the chair he would need to go to the &ldquo;chair factory&rdquo; and wait a while, getting a chair. </div>
+
+<div class="standard"><a id='magicparlabel-1737' />Let's talk now about how the dwarfs choose what job to do at any time.</div>
+
+<ol class="enumerate"><a id='magicparlabel-1738' /><li class="enumerate_item">The dwarfs walk along the graph (read, do a for loop) and check for the following criteria:
+
+<ol class="enumerate"><a id='magicparlabel-1739' /><li class="enumerate_item">do they have in their inventory the required material to do.</li>
+<li class="enumerate_item">no other dwarf already does the specific job node. </li>
+</ol>
+</li></ol>
+<div class="standard"><a id='magicparlabel-1741' />So what are the next steps to work on the system to make it a little more worthy:</div>
+
+<ol class="enumerate"><a id='magicparlabel-1742' /><li class="enumerate_item">The job node graph may need a better representation.</li>
+<li class="enumerate_item">The different type of jobs need to have a better representation of what is exactly the job needed to be done. At the moment it is hard coded, but when it will be more general it will be hard to do. I may want some kind of a property system or something.</li>
+<li class="enumerate_item">The fact that a job already has a working dwarf on it may not mean a lot. It might be better to move the requirement either to the factory or grow it into a number of dwarfs needed to make a job.</li>
+<li class="enumerate_item">At the moment the dwarfs don't have any communication between them. I think that a good system will be that if the dwarf carry too much weight, he will go to the store and put all of his items there, and take what he needs to do the next job. Then when another dwarf looks for their next job node, he can look in the storage whether the required material is already there.</li>
+<li class="enumerate_item">The inventory system is currently an integer array of all the products in the world, which is of course just chairs/ and rocks. I think that a hash table would be a better fit here.</li>
+<li class="enumerate_item">At the moment there is no notion of whether a job node was finished, it's not clear what to do with this for now.</li>
+<li class="enumerate_item">The old job system for the rocks is not really a good replacement, the same system doesn't really translate well to factories.</li>
+<li class="enumerate_item">Chairs are not manafuctured at the moment due to the fact it wasn't coded yet. :)</li>
+</ol>
+<div class="standard"><a id='magicparlabel-1750' />I think that all of those problems will fix themselves by working more on the system.</div>
+</body>
+</html>

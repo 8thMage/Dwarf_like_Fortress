@@ -13,7 +13,7 @@ struct hash_table//we'll start with hash_table of pointers.
 enum Product_type
 {
 	Product_type_rock,
-	Product_type_chair,
+	Product_type_chair,//TODO define properties in order to make the cases clearer.
 	NUM_OF_PRODUCT_TYPES
 };
 struct Job_product

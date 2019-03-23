@@ -58,7 +58,7 @@ int pos_to_map(Map* map,Vec2i pos)
 }
 bool dwarf_has_enough(Job_product* product, Dwarf* dwarf)
 {
-	if(dwarf->inventory[product->number].number>product->number)
+	if(dwarf->inventory[product->product].number>=product->number)
 	{
 		return true;
 	}
@@ -86,6 +86,7 @@ void find_next_job_in_new_job(New_job* new_job,Dwarf* dwarf)
 			{
 				dwarf->new_job=node;
 				node->dwarfs_working_on_it++;
+				break;
 			}
 		}
 	}
@@ -100,6 +101,8 @@ New_job add_build_chair(MemoryBuffer* buffer)
 	job.job_nodes[1]={};
 	job.job_nodes[1].count_resources_needed=1;
 	job.job_nodes[1].resources_needed=push_array(buffer,Job_product,job.job_nodes[1].count_resources_needed);
+	job.job_nodes[1].resources_needed[0].product=Product_type_rock;
+	job.job_nodes[1].resources_needed[0].number=1;
 	job.job_nodes[1].resulting_resource=Product_type_chair;
 	return job;
 }
@@ -179,6 +182,7 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		Dwarf* dwarfs=game_memory->game_data->dwarfs;
 		memset(dwarfs,0,game_memory->game_data->dwarf_number*sizeof(Dwarf));
 		dwarfs->pos=vec2i(40,20);
+		dwarfs[1].pos=vec2i(60,20);
 	}
 	Game_data* game_data=game_memory->game_data;
 	Map* map = &game_data->map;
@@ -211,6 +215,15 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 						dwarf->next_time_to_move=input->time+100;
 						dwarf->new_job=0;
 					}
+					else if(dwarf->new_job->resulting_resource==Product_type_chair)
+					{
+						dwarf->inventory[Product_type_rock].number--;
+						dwarf->inventory[Product_type_chair].number++;
+						dwarf->new_job->dwarfs_working_on_it=0;
+						dwarf->next_time_to_move=input->time+300;
+						dwarf->new_job=0;
+					}
+
 				}
 				else if(dwarf->pos.x<dwarf->tgt.x)
 				{
@@ -238,6 +251,10 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 				New_job_queue* job_queue=&game_data->job_queue;
 				for(int i=job_queue->next_read;i<job_queue->next_write;i++)
 				{
+					if (dwarf - game_data->dwarfs == 1)
+					{
+						dwarf=dwarf;
+					}
 					find_next_job_in_new_job(&job_queue->new_jobs[i],dwarf);
 					if(dwarf->new_job)
 					{
@@ -248,16 +265,19 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 							{
 								Job rock=rocks_queue->rocks_position[rocks_queue->next_read%rocks_queue->capacity];
 								rocks_queue->next_read++;
-								dwarf->tgt=rock.pos;
-								break;
+								dwarf->tgt=rock.pos; break;
 							}
 							else
 							{
 								dwarf->new_job=0;
 							}
 						}
-					//	else if(dwarf->new_job->resulting_resource==Product_type_chair)
+						else if(dwarf->new_job->resulting_resource==Product_type_chair)
+						{
+							dwarf->tgt={15,25};
+						}
 					}
+					if (dwarf->new_job) break;
 				}
 			}
 		}

@@ -29,6 +29,7 @@ struct Job_node
 	int count_resources_needed;
 	Product_type resulting_resource;
 	int dwarfs_working_on_it;
+	int max_dwarfs_working_on_it;
 };
 struct New_job
 {

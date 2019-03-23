@@ -46,14 +46,21 @@ struct New_job_queue
 	int next_write;
 	int capacity;
 };
+struct Inventory
+{
+	Job_product inventory[NUM_OF_PRODUCT_TYPES];
+};
 struct Dwarf
 {
 	Vec2i pos;
 	Vec2i tgt;
 	//Job job;
+	bool need_collecting;
+	bool need_returning;
 	Job_node* new_job;
 	u64 next_time_to_move;
-	Job_product inventory[NUM_OF_PRODUCT_TYPES];//NOTE(EDEN): HACK need to be hash_table
+	Inventory inventory;//NOTE(EDEN): HACK need to be hash_table
+
 };
 struct Game_data
 {
@@ -62,6 +69,7 @@ struct Game_data
 	int dwarf_number;
 	int rock_number;
 	int chair_number;
+	Inventory store;//NOTE(EDEN): HACK need to be hash_table
 	Job_queue rocks_queue;
 	New_job_queue job_queue;
 };

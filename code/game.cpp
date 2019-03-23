@@ -56,35 +56,45 @@ int pos_to_map(Map* map,Vec2i pos)
 {
 	return pos.y*map->width+pos.x;
 }
-bool dwarf_has_enough(Job_product* product, Dwarf* dwarf)
+bool inventory_has_enough(Job_product* product, Inventory* inventory)
 {
-	if(dwarf->inventory[product->product].number>=product->number)
-	{
+	if(inventory->inventory[product->product].number>=product->number)
+	{//inline it
 		return true;
 	}
 	return false;
 }
-void find_next_job_in_new_job(New_job* new_job,Dwarf* dwarf)
+
+void find_next_job_in_new_job(New_job* new_job,Dwarf* dwarf,Inventory* store)
 {
 	int count=new_job->count;
 	
 	for(int i=count-1;i>=0;i--)
 	{
 		bool can_do_job=true;
+		bool collect_from_inventory=false;
 		Job_node* node=&new_job->job_nodes[i];
-		if(node->dwarfs_working_on_it==0)//NOTE():need to be some max
+		if(node->dwarfs_working_on_it<node->max_dwarfs_working_on_it)//NOTE():need to be some max
 		{
 			forej(node->count_resources_needed)
 			{
-				if(!dwarf_has_enough(&node->resources_needed[j],dwarf))
+				if(!inventory_has_enough(&node->resources_needed[j],&dwarf->inventory))
 				{
-					can_do_job=false;
+					if(inventory_has_enough(&node->resources_needed[j],store))
+					{
+						collect_from_inventory=true;
+					}
+					else
+					{
+						can_do_job=false;
+					}
 				}
 			}
 
 			if(can_do_job)
 			{
 				dwarf->new_job=node;
+				dwarf->need_collecting=collect_from_inventory;
 				node->dwarfs_working_on_it++;
 				break;
 			}
@@ -98,11 +108,13 @@ New_job add_build_chair(MemoryBuffer* buffer)
 	job.job_nodes=push_array(buffer,Job_node,2);
 	job.job_nodes[0]={};
 	job.job_nodes[0].resulting_resource=Product_type_rock;
+	job.job_nodes[0].max_dwarfs_working_on_it=4;
 	job.job_nodes[1]={};
 	job.job_nodes[1].count_resources_needed=1;
 	job.job_nodes[1].resources_needed=push_array(buffer,Job_product,job.job_nodes[1].count_resources_needed);
 	job.job_nodes[1].resources_needed[0].product=Product_type_rock;
-	job.job_nodes[1].resources_needed[0].number=1;
+	job.job_nodes[1].resources_needed[0].number=4;
+	job.job_nodes[1].max_dwarfs_working_on_it=1;
 	job.job_nodes[1].resulting_resource=Product_type_chair;
 	return job;
 }
@@ -166,7 +178,7 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		job_queue->rocks_position[7].type=job_type_dig_rock;
 		job_queue->rocks_position[8].type=job_type_dig_rock;
 
-		job_queue->next_write=9;
+		job_queue->next_write=8;
 		job_queue->next_read=0;
 		New_job_queue* new_job_queue=&game_memory->game_data->job_queue;
 		new_job_queue->capacity=20;
@@ -192,14 +204,49 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 		Dwarf* dwarf=&game_data->dwarfs[i];
 		if(input->time>dwarf->next_time_to_move)
 		{
-			if(dwarf->new_job)
+			if(dwarf->new_job||dwarf->need_returning)
 			{
 				Job_node* job=dwarf->new_job;
 				if(abs(dwarf->pos.x-dwarf->tgt.x)+abs(dwarf->pos.y-dwarf->tgt.y)<=1)
 				{
-					if(dwarf->new_job->resulting_resource==Product_type_rock)
+					if(dwarf->need_collecting||dwarf->need_returning)
 					{
-						dwarf->inventory[Product_type_rock].number++;
+						forej(NUM_OF_PRODUCT_TYPES)
+						{
+							game_data->store.inventory[j].number+=dwarf->inventory.inventory[j].number;
+							dwarf->inventory.inventory[j].number=0;
+						}
+						bool has_enough=true;
+						if(dwarf->need_returning)
+							dwarf->need_returning=false;
+						if(dwarf->need_collecting)
+						{
+							forej(dwarf->new_job->count_resources_needed)
+							{
+								Job_product* needed=&dwarf->new_job->resources_needed[j];
+								if(game_data->store.inventory[needed->product].number>=needed->number)
+								{
+									dwarf->inventory.inventory[needed->product].number=needed->number;
+									game_data->store.inventory[needed->product].number-=needed->number;
+								}
+								else
+								{
+									has_enough=false;
+								}
+							}
+							if(has_enough)
+							{
+								if(dwarf->new_job->resulting_resource==Product_type_chair)
+								{
+									dwarf->tgt={15,25};
+								}
+							}
+							dwarf->need_collecting=false;
+						}
+					}
+					else if(dwarf->new_job->resulting_resource==Product_type_rock)
+					{
+						dwarf->inventory.inventory[Product_type_rock].number++;
 						dwarf->new_job->dwarfs_working_on_it=0;
 						map->map_objs[pos_to_map(map,dwarf->tgt)]=map_object_clear;
 						Vec2i new_pos=vec2i((dwarf->pos.y+20)%map->width,dwarf->pos.x);
@@ -213,17 +260,20 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 						game_data->rocks_queue.rocks_position[game_data->rocks_queue.next_write%game_data->rocks_queue.capacity].type=job_type_dig_rock;
 						game_data->rocks_queue.next_write++;
 						dwarf->next_time_to_move=input->time+100;
+						dwarf->tgt={10,45};
+						dwarf->need_returning=true;
 						dwarf->new_job=0;
 					}
 					else if(dwarf->new_job->resulting_resource==Product_type_chair)
 					{
-						dwarf->inventory[Product_type_rock].number--;
-						dwarf->inventory[Product_type_chair].number++;
+						dwarf->inventory.inventory[Product_type_rock].number--;
+						dwarf->inventory.inventory[Product_type_chair].number++;
 						dwarf->new_job->dwarfs_working_on_it=0;
 						dwarf->next_time_to_move=input->time+300;
+						dwarf->tgt={10,45};
+						dwarf->need_returning=true;
 						dwarf->new_job=0;
 					}
-
 				}
 				else if(dwarf->pos.x<dwarf->tgt.x)
 				{
@@ -251,14 +301,14 @@ void go_game(Input* input, GameMemory* game_memory, read_file_type* read_file)
 				New_job_queue* job_queue=&game_data->job_queue;
 				for(int i=job_queue->next_read;i<job_queue->next_write;i++)
 				{
-					if (dwarf - game_data->dwarfs == 1)
-					{
-						dwarf=dwarf;
-					}
-					find_next_job_in_new_job(&job_queue->new_jobs[i],dwarf);
+					find_next_job_in_new_job(&job_queue->new_jobs[i],dwarf,&game_data->store);
 					if(dwarf->new_job)
 					{
-						if(dwarf->new_job->resulting_resource==Product_type_rock)
+						if(dwarf->need_collecting)
+						{
+							dwarf->tgt={10,45};
+						}
+						else if(dwarf->new_job->resulting_resource==Product_type_rock)
 						{
 							Job_queue* rocks_queue=&game_data->rocks_queue;
 							if(rocks_queue->next_write>rocks_queue->next_read)
